@@ -5,24 +5,25 @@ namespace MySnake.Model;
 
 public class Snake
 {
-    public event EventHandler<SnakeBody> TailRemoved;
-    public event EventHandler<SnakeBody> HeadMoved;
+    public event EventHandler<Point> TailRemoved;
+    public event EventHandler<Point> HeadMoved;
+    public event Action<Snake> SnakeGotDamage;
 
-    public SnakeBody Head { get; private set; }
-    public IEnumerable<SnakeBody> Body => _body;
+    public Point Head { get; private set; }
+    public IEnumerable<Point> Body => _body;
     public int Length => _body.Count + 1;
-    private readonly Queue<SnakeBody> _body = new();
+    private readonly Queue<Point> _body = new();
+
+    private Direction? _previousMove;
+    private bool _grow;
 
     public bool CanMove(Direction direction) =>
         _previousMove == null || direction != Orientation.OppositeMoves[(Direction)_previousMove];
 
-    private Direction? _previousMove;
-    public bool Grow { get; set; }
-
     public Snake(int x, int y, int length)
     {
-        Head = new SnakeBody(x, y);
-        for (int i = 1; i < length; i++) _body.Enqueue(new SnakeBody(x, y));
+        Head = new Point(x, y);
+        for (int i = 1; i < length; i++) _body.Enqueue(new Point(x, y));
     }
 
     public bool Move(Direction direction)
@@ -40,35 +41,18 @@ public class Snake
         Head = Head.With(x, y);
         HeadMoved?.Invoke(this, Head);
 
-        if (Grow)
-            Grow = false;
+        if (_grow)
+            _grow = false;
         else
             RemoveTail();
     }
 
+    public void Grow() => _grow = true;
     private void RemoveTail() => TailRemoved?.Invoke(this, _body.Dequeue());
 
     public void GetDamage()
     {
         RemoveTail();
-    }
-}
-
-public struct SnakeBody
-{
-    public int X { get; private set; }
-    public int Y { get; private set; }
-
-    public SnakeBody With((int, int) delta) => With(delta.Item1, delta.Item2);
-
-    public SnakeBody With(int deltaX, int deltaY)
-    {
-        return new SnakeBody(X + deltaX, Y + deltaY);
-    }
-
-    public SnakeBody(int x, int y)
-    {
-        X = x;
-        Y = y;
+        SnakeGotDamage?.Invoke(this);
     }
 }

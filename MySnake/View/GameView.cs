@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MySnake.Model;
+using Point = MySnake.Model.Point;
 
 namespace MySnake.View;
 
@@ -18,12 +19,12 @@ public class GameView
 
     private int ViewWidth { get; set; }
     private int ViewHeight { get; set; }
-    public int WindowWidth { get; private set; }
-    public int WindowHeight { get; private set; }
+    private int WindowWidth { get; set; }
+    private int WindowHeight { get; set; }
     private Rectangle CellSize { get; set; }
     public Texture2D SquareTexture { get; set; }
     public SpriteBatch SpriteBatch { get; set; }
-    public GameModel Model { get; set; }
+    private GameModel Model { get; set; }
 
     public void SetWindowSize(object sender, EventArgs eventArgs)
     {
@@ -38,59 +39,58 @@ public class GameView
         var cellWidth = WindowWidth / ViewWidth;
         var cellHeight = WindowHeight / ViewHeight;
         CellSize = new Rectangle(0, 0, cellWidth, cellHeight);
-        
     }
 
     public void Update()
     {
-        var player = Model.GetPlayerHead();
-
-        // var top = Math.Min(player.Y - ViewHeight / 2, 0);
-        // var bottom = Math.Max(player.Y + ViewHeight / 2, Model.MapHeight);
-        // var right = Math.Max(player.X + ViewWidth / 2, Model.MapWidth);
-        // var left = Math.Min(player.X - ViewWidth / 2, 0);
-        var top = player.Y - ViewHeight / 2;
-        var bottom = player.Y + ViewHeight / 2;
-        var right = player.X + ViewWidth / 2;
-        var left = player.X - ViewWidth / 2;
-
-        if (top < 0)
-        {
-            bottom -= top;
-            top = 0;
-        }
-        else if (bottom > Model.MapHeight)
-        {
-            top -= bottom - Model.MapHeight;
-            bottom = Model.MapHeight;
-        }
-
-        if (left < 0)
-        {
-            right -= left;
-            left = 0;
-        }
-        else if (right > Model.MapWidth)
-        {
-            left -= right - Model.MapWidth;
-            right = Model.MapWidth;
-        }
-
+        var playerHead = Model.GetPlayerHead();
+        var bounds = GetViewBounds(playerHead);
 
         SpriteBatch.Begin();
-        for (int y = top; y < bottom; y++)
+        for (int y = bounds.Top; y < bounds.Bottom; y++)
         {
-            var cordY = (y - top) * CellSize.Height;
-            for (int x = left; x < right; x++)
+            var cordY = (y - bounds.Top) * CellSize.Height;
+            for (int x = bounds.Left; x < bounds.Right; x++)
             {
-                var cordX = (x - left) * CellSize.Width;
+                var cordX = (x - bounds.Left) * CellSize.Width;
                 var color = _cellToColor[Model.GetMapCell(x, y)];
                 SpriteBatch.Draw(SquareTexture, new Vector2(cordX, cordY), CellSize, color);
             }
         }
+
         SpriteBatch.End();
     }
 
+    private Rectangle GetViewBounds(Point point)
+    {
+        var top = point.Y - ViewHeight / 2;
+        var bottom = point.Y + ViewHeight / 2;
+        var right = point.X + ViewWidth / 2;
+        var left = point.X - ViewWidth / 2;
+
+        NormalizeBounds(ref top, ref bottom);
+        NormalizeBounds(ref left, ref right);
+
+        return new Rectangle(left, top, bottom - top, right - left);
+    }
+
+    private void NormalizeBounds(ref int lowerBound, ref int upperBound)
+    {
+        if (lowerBound < 0)
+        {
+            upperBound -= lowerBound;
+            lowerBound = 0;
+        }
+        else if (upperBound > Model.MapHeight)
+        {
+            lowerBound -= upperBound - Model.MapHeight;
+            upperBound = Model.MapHeight;
+        }
+    }
+
     private readonly Dictionary<MapCell, Color> _cellToColor = new()
-        { [MapCell.Empty] = Color.Black, [MapCell.Player] = Color.White, [MapCell.Snake] = Color.Red };
+    {
+        [MapCell.Empty] = Color.Black, [MapCell.Player] = Color.White,
+        [MapCell.Snake] = Color.Red, [MapCell.Food] = Color.GreenYellow
+    };
 }
