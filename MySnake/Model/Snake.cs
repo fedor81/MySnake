@@ -5,17 +5,16 @@ namespace MySnake.Model;
 
 public class Snake
 {
-    public event Action<SnakeBody> TailRemoved;
-    
+    public event EventHandler<SnakeBody> TailRemoved;
+    public event EventHandler<SnakeBody> HeadMoved;
+
     public SnakeBody Head { get; private set; }
     public IEnumerable<SnakeBody> Body => _body;
     public int Length => _body.Count + 1;
     private readonly Queue<SnakeBody> _body = new();
 
-    public bool CanMove(Direction direction)
-    {
-        return _previousMove == null || direction != Orientation.OppositeMoves[(Direction)_previousMove];
-    }
+    public bool CanMove(Direction direction) =>
+        _previousMove == null || direction != Orientation.OppositeMoves[(Direction)_previousMove];
 
     private Direction? _previousMove;
     public bool Grow { get; set; }
@@ -23,7 +22,7 @@ public class Snake
     public Snake(int x, int y, int length)
     {
         Head = new SnakeBody(x, y);
-        for (int i = 0; i < length - 1; i++) _body.Enqueue(new SnakeBody(x, y));
+        for (int i = 1; i < length; i++) _body.Enqueue(new SnakeBody(x, y));
     }
 
     public bool Move(Direction direction)
@@ -39,13 +38,19 @@ public class Snake
     {
         _body.Enqueue(Head);
         Head = Head.With(x, y);
+        HeadMoved?.Invoke(this, Head);
 
         if (Grow)
             Grow = false;
         else
-        {
-            TailRemoved?.Invoke(_body.Dequeue());
-        }
+            RemoveTail();
+    }
+
+    private void RemoveTail() => TailRemoved?.Invoke(this, _body.Dequeue());
+
+    public void GetDamage()
+    {
+        RemoveTail();
     }
 }
 
