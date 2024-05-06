@@ -25,10 +25,11 @@ public class Game1 : Game
     protected override void Initialize()
     {
         _model = new GameModel(100, 100);
-        _view = new GameView(16, 9);
-        _controller = new GameController();
+        _view = new GameView(_model, 32, 18, Window.ClientBounds.Width, Window.ClientBounds.Height);
+        _controller = new GameController(_model);
 
         Window.KeyDown += _controller.KeyDown;
+        Window.ClientSizeChanged += _view.SetWindowSize;
         
         base.Initialize();
     }
@@ -52,7 +53,8 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
-
+        
+        _view.Update();
 
         base.Draw(gameTime);
     }

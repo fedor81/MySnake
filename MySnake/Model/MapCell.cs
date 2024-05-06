@@ -4,7 +4,7 @@ public enum MapCell
 {
     Empty,
     Player,
-    OtherSnake,
+    Snake,
     Food,
     Wall,
     Grass,

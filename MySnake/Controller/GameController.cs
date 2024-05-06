@@ -6,6 +6,11 @@ namespace MySnake.Controller;
 
 public class GameController
 {
+    public GameController(GameModel model)
+    {
+        Model = model;
+    }
+
     public GameModel Model { get; set; }
     
     public void KeyDown(object sender, InputKeyEventArgs e)
