@@ -9,40 +9,44 @@ public class GameModel
         MapWidth = mapWidth;
         MapHeight = mapHeight;
         Map = new MapCell[MapWidth, MapHeight];
-        MapCells = new MapCell[MapWidth, MapHeight];
-        Player = new Snake(50, 50, 10);
-        Map[50, 50] = MapCell.Player;
+        Player = new Snake(mapWidth / 2, mapHeight / 2, 10);
+        Map[Player.Head.X, Player.Head.Y] = MapCell.Player;
+        Player.TailRemoved += RemoveSnakeTailFromMap;
         _snakes.Add(Player);
     }
 
     public int MapHeight { get; private set; }
     public int MapWidth { get; private set; }
     private MapCell[,] Map { get; set; }
-    public MapCell[,] MapCells { get; private set; }
 
     private Snake Player { get; set; }
     private List<Snake> _snakes = new();
 
     public SnakeBody GetPlayerHead() => Player.Head;
-    public MapCell GetMapCell(int x, int y) => MapCells[x, y];
+    public MapCell GetMapCell(int x, int y) => Map[x, y];
+    public MapCell GetMapCell((int, int) cords) => GetMapCell(cords.Item1, cords.Item2);
 
     public void MovePlayer(Direction direction)
     {
-        if (Player.Move(direction))
-            Update();
+        var nextCords = Player.Head.With(Orientation.DirectionToMove[direction]);
+        
+        if (Player.CanMove(direction) && InWindow(nextCords))
+        {
+            Player.Move(direction);
+            Map[nextCords.X, nextCords.Y] = MapCell.Player;
+        }
     }
+
+    private void RemoveSnakeTailFromMap(SnakeBody snakeBody)
+    {
+        Map[snakeBody.X, snakeBody.Y] = MapCell.Empty;
+    }
+
+    private bool InWindow(SnakeBody snakeBody) => InWindow(snakeBody.X, snakeBody.Y);
+    private bool InWindow((int, int) coords) => InWindow(coords.Item1, coords.Item2);
+    private bool InWindow(int x, int y) => 0 <= x && x < MapWidth && 0 <= y && y < MapHeight;
 
     private void Update()
     {
-        foreach (var snake in _snakes)
-        {
-            MapCells = (MapCell[,])Map.Clone();
-            var snakeHead = snake.Head;
-            MapCells[snakeHead.X, snakeHead.Y] = MapCell.Snake;
-            foreach (var snakeBody in snake.Body)
-            {
-                MapCells[snakeBody.X, snakeBody.Y] = MapCell.Snake;
-            }
-        }
     }
 }

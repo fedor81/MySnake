@@ -20,12 +20,13 @@ public class Game1 : Game
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
+        Window.AllowUserResizing = true;
     }
 
     protected override void Initialize()
     {
-        _model = new GameModel(100, 100);
-        _view = new GameView(_model, 32, 18, Window.ClientBounds.Width, Window.ClientBounds.Height);
+        _model = new GameModel(30, 30);
+        _view = new GameView(_model, 30, 30, Window.ClientBounds.Width, Window.ClientBounds.Height);
         _controller = new GameController(_model);
 
         Window.KeyDown += _controller.KeyDown;

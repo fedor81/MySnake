@@ -5,32 +5,17 @@ namespace MySnake.Model;
 
 public class Snake
 {
+    public event Action<SnakeBody> TailRemoved;
+    
     public SnakeBody Head { get; private set; }
     public IEnumerable<SnakeBody> Body => _body;
-    public SnakeBody End { get; private set; }
     public int Length => _body.Count + 1;
     private readonly Queue<SnakeBody> _body = new();
 
-    private bool CanMoveUp => _previousMove != Direction.Up;
-    private bool CanMoveDown => _previousMove != Direction.Down;
-    private bool CanMoveRight => _previousMove != Direction.Right;
-    private bool CanMoveLeft => _previousMove != Direction.Left;
-
-    private readonly Dictionary<Direction, int[]> _directionToMove = new()
+    public bool CanMove(Direction direction)
     {
-        [Direction.Up] = new[] { 0, -1 },
-        [Direction.Down] = new[] { 0, 1 },
-        [Direction.Left] = new[] { -1, 0 },
-        [Direction.Right] = new[] { 1, 0 }
-    };
-
-    private readonly Dictionary<Direction, Direction> _oppositeMoves = new()
-    {
-        [Direction.Up] = Direction.Down,
-        [Direction.Down] = Direction.Up,
-        [Direction.Left] = Direction.Right,
-        [Direction.Right] = Direction.Left,
-    };
+        return _previousMove == null || direction != Orientation.OppositeMoves[(Direction)_previousMove];
+    }
 
     private Direction? _previousMove;
     public bool Grow { get; set; }
@@ -43,13 +28,12 @@ public class Snake
 
     public bool Move(Direction direction)
     {
-        if (_previousMove != null && direction == _oppositeMoves[(Direction)_previousMove]) return false;
         _previousMove = direction;
-        Move(_directionToMove[direction]);
+        Move(Orientation.DirectionToMove[direction]);
         return true;
     }
 
-    private void Move(IReadOnlyList<int> move) => Move(move[0], move[1]);
+    private void Move((int, int) move) => Move(move.Item1, move.Item2);
 
     private void Move(int x, int y)
     {
@@ -59,7 +43,9 @@ public class Snake
         if (Grow)
             Grow = false;
         else
-            _body.Dequeue();
+        {
+            TailRemoved?.Invoke(_body.Dequeue());
+        }
     }
 }
 
@@ -67,6 +53,8 @@ public struct SnakeBody
 {
     public int X { get; private set; }
     public int Y { get; private set; }
+
+    public SnakeBody With((int, int) delta) => With(delta.Item1, delta.Item2);
 
     public SnakeBody With(int deltaX, int deltaY)
     {
