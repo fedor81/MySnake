@@ -26,11 +26,10 @@ public class Snake
         for (int i = 1; i < length; i++) _body.Enqueue(new Point(x, y));
     }
 
-    public bool Move(Direction direction)
+    public void Move(Direction direction)
     {
         _previousMove = direction;
         Move(Orientation.DirectionToMove[direction]);
-        return true;
     }
 
     private void Move((int, int) move) => Move(move.Item1, move.Item2);

@@ -5,6 +5,7 @@ namespace MySnake.Model;
 
 public class GameModel
 {
+    // TODO: Урать width, height от сюда
     public GameModel(int mapWidth, int mapHeight)
     {
         Map = new GameMap(mapWidth, mapHeight);
@@ -15,6 +16,9 @@ public class GameModel
         Player.HeadMoved += AddSnakeBodyToMap;
     }
 
+    public event Action StateChanged;
+    public event Action MapChanged;
+    
     private GameMap Map { get; set; }
     public int MapWidth => Map.Width;
     public int MapHeight => Map.Height;
@@ -24,7 +28,9 @@ public class GameModel
 
     public Point GetPlayerHead() => Player.Head;
     public MapCell GetMapCell(int x, int y) => Map[x, y];
+    public MapCell[,] GetOriginalMap() => Map.GetOriginalMap();
 
+    // TODO: Damage при столкновении со стеной
     public void MovePlayer(Direction direction)
     {
         var nextPoint = Player.Head.With(Orientation.DirectionToMove[direction]);
@@ -44,6 +50,7 @@ public class GameModel
             }
             Player.Move(direction);
         }
+        Update();
     }
 
     private void AddSnakeBodyToMap(object snake, Point point)
@@ -71,5 +78,6 @@ public class GameModel
 
     private void Update()
     {
+        StateChanged?.Invoke();
     }
 }

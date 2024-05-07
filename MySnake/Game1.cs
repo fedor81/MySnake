@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MySnake.Controller;
@@ -26,8 +27,11 @@ public class Game1 : Game
     protected override void Initialize()
     {
         _model = new GameModel(30, 30);
-        _view = new GameView(_model, 30, 30, Window.ClientBounds.Width, Window.ClientBounds.Height);
-        _controller = new GameController(_model);
+        _view = new GameView(GraphicsDevice, _model, 30, 30);
+        _controller = new GameController(_model, _view);
+
+        _model.StateChanged += _view.Update;
+        _model.MapChanged += _view.UpdateMap;
 
         Window.KeyDown += _controller.KeyDown;
         Window.ClientSizeChanged += _view.SetWindowSize;
@@ -40,6 +44,8 @@ public class Game1 : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _view.SpriteBatch = _spriteBatch;
         _view.SquareTexture = Content.Load<Texture2D>("white-square");
+        _view.SetWindowSize(Window, EventArgs.Empty);
+        _view.Update();
     }
 
     protected override void Update(GameTime gameTime)
@@ -47,16 +53,17 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
             Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
-
+        
         base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        GraphicsDevice.Clear(_view.BackgroundColor);
+        _spriteBatch.Begin();
+        _spriteBatch.Draw(_view.ToDrawBuffer, _view.ToDrawPosition, Color.White);
+        _spriteBatch.End();
         
-        _view.Update();
-
         base.Draw(gameTime);
     }
 }

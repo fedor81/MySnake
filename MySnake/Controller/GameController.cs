@@ -1,18 +1,21 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MySnake.Model;
+using MySnake.View;
 
 namespace MySnake.Controller;
 
 public class GameController
 {
-    public GameController(GameModel model)
+    public GameController(GameModel model, GameView view)
     {
         Model = model;
+        View = view;
     }
 
     public GameModel Model { get; set; }
-    
+    public GameView View { get; set; }
+
     public void KeyDown(object sender, InputKeyEventArgs e)
     {
         switch (e.Key)
@@ -28,6 +31,9 @@ public class GameController
                 break;
             case Keys.S:
                 Model.MovePlayer(Direction.Down);
+                break;
+            case Keys.M:
+                View.ShowMap();
                 break;
         }
     }
