@@ -18,8 +18,8 @@ public class GameModel
 
     public event Action StateChanged;
     public event Action MapChanged;
-    
-    private GameMap Map { get; set; }
+
+    public GameMap Map { get; set; }
     public int MapWidth => Map.Width;
     public int MapHeight => Map.Height;
 
