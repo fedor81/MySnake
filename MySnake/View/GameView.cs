@@ -120,6 +120,7 @@ public class GameView
 
         var map = Model.GetOriginalMap();
         var noiseMap = Model.Map.NoiseMap;
+        var gameLifeMap = Model.Map.GameLifeMap;
 
         for (int x = 0; x < Model.MapWidth; x++)
         {
@@ -127,6 +128,7 @@ public class GameView
             {
                 var color = _cellToColor[map[x, y]];
                 color = new Color(noiseMap[x, y], noiseMap[x, y], noiseMap[x, y]);
+                color = gameLifeMap[x, y] ? Color.White : Color.Black;
                 SpriteBatch.Draw(SquareTexture, new Vector2(x * cellSize, y * cellSize), color);
             }
         }
