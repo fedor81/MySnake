@@ -2,6 +2,7 @@ namespace MySnake.Model;
 
 public class GameMap
 {
+    public float[,] NoiseMap = new float[100, 100];
     private MapCell[,] Map { get; set; }
     private MapCell[,] OriginalMap { get; set; }
     public int Width { get; private set; }

@@ -119,7 +119,7 @@ public class GameView
         SpriteBatch.Begin();
 
         var map = Model.GetOriginalMap();
-        // var noiseMap = Model.Map.NoiseMap;
+        var noiseMap = Model.Map.NoiseMap;
 
         for (int x = 0; x < Model.MapWidth; x++)
         {

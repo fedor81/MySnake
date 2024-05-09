@@ -9,7 +9,7 @@ public class GameModel
     public GameModel(int mapWidth, int mapHeight)
     {
         var generator = new MapGenerator();
-        Map = generator.GenerateMap();
+        Map = generator.GenerateMapWith();
         Player = new Snake(mapWidth / 2, mapHeight / 2, 10);
         Map[Player.Head] = MapCell.Player;
         SpawnFood();

@@ -71,4 +71,9 @@ public class Growth
     {
         return PerformIterations(initial, (value, count) => count > 1, numberIterations);
     }
+
+    public bool[,] Median(bool[,] initial, int numberIteration = 1)
+    {
+        return PerformIterations(initial, (value, count) => count > 4, numberIteration);
+    }
 }
