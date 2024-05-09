@@ -1,54 +1,26 @@
-using System;
-using System.Runtime.Intrinsics.X86;
-
 namespace MySnake.Model;
 
 public class GameMap
 {
-    public float[,] NoiseMap;
-    public bool[,] GameLifeMap;
     private MapCell[,] Map { get; set; }
     private MapCell[,] OriginalMap { get; set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
 
-    // TODO: генерация карты
     public GameMap(int width, int height)
     {
         Map = new MapCell[width, height];
-        var random = new Random();
-        var perlin = new PerlinNoise(random.Next());
-        NoiseMap = new float[width, height];
-        GameLifeMap = new bool[width, height];
-        
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                var noise = perlin.GetNoise(x + random.NextSingle(), y + random.NextSingle());
-                NoiseMap[x, y] = noise;
-                GameLifeMap[x, y] = 0.6 < noise && noise < 0.8;
-            }
-        }
-
-        var g = new GameOfLife(random.Next());
-        GameLifeMap = g.Get(GameLifeMap, 200, random.Next(6));
-        var groth = new Growth();
-        GameLifeMap = groth.Get(GameLifeMap);
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                Map[x, y] = GameLifeMap[x, y] ? MapCell.Empty: MapCell.Wall;
-            }
-        }
-        
-        
-        
-        
-        OriginalMap = Map.Clone() as MapCell[,];
+        OriginalMap = (MapCell[,])Map.Clone();
         Width = width;
         Height = height;
+    }
+
+    public GameMap(MapCell[,] map)
+    {
+        Map = map; 
+        OriginalMap = (MapCell[,])Map.Clone();
+        Width = map.GetLength(0);
+        Height = map.GetLength(1);
     }
 
     public MapCell this[int x, int y]

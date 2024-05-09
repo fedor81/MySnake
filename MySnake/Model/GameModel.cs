@@ -8,7 +8,8 @@ public class GameModel
     // TODO: Урать width, height от сюда
     public GameModel(int mapWidth, int mapHeight)
     {
-        Map = new GameMap(mapWidth, mapHeight);
+        var generator = new MapGenerator();
+        Map = generator.GenerateMap();
         Player = new Snake(mapWidth / 2, mapHeight / 2, 10);
         Map[Player.Head] = MapCell.Player;
         SpawnFood();

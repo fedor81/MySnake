@@ -14,9 +14,9 @@ public static class Interpolation
         return a + t * (b - a);
     }
 
-    public static double CosineCurve(double t)
+    public static float CosineCurve(float t)
     {
-        return (1 - Math.Cos(t * Math.PI)) / 2;
+        return (float)((1 - Math.Cos(t * Math.PI)) / 2);
     }
 
     public static float CubicCurve(float t)

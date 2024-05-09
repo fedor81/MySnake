@@ -119,16 +119,14 @@ public class GameView
         SpriteBatch.Begin();
 
         var map = Model.GetOriginalMap();
-        var noiseMap = Model.Map.NoiseMap;
-        var gameLifeMap = Model.Map.GameLifeMap;
+        // var noiseMap = Model.Map.NoiseMap;
 
         for (int x = 0; x < Model.MapWidth; x++)
         {
             for (int y = 0; y < Model.MapHeight; y++)
             {
                 var color = _cellToColor[map[x, y]];
-                color = new Color(noiseMap[x, y], noiseMap[x, y], noiseMap[x, y]);
-                color = gameLifeMap[x, y] ? Color.White : Color.Black;
+                // color = new Color(noiseMap[x, y], noiseMap[x, y], noiseMap[x, y]);
                 SpriteBatch.Draw(SquareTexture, new Vector2(x * cellSize, y * cellSize), color);
             }
         }
@@ -171,7 +169,7 @@ public class GameView
         [MapCell.Empty] = Color.Black,
         [MapCell.Player] = Color.White,
         [MapCell.Snake] = Color.Red,
-        [MapCell.Food] = Color.GreenYellow,
+        [MapCell.Food] = Color.YellowGreen,
         [MapCell.Wall] = Color.Brown,
         [MapCell.Grass] = Color.Green
     };
