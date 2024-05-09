@@ -26,7 +26,7 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
-        _model = new GameModel(100, 100);
+        _model = new GameModel();
         _view = new GameView(GraphicsDevice, _model, 30, 30);
         _controller = new GameController(_model, _view);
 

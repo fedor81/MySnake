@@ -4,94 +4,93 @@ namespace MySnake.Model;
 
 public class MapGenerator
 {
-    public GameMap GenerateMapWithLongWall()
+    private readonly Random _random;
+    private readonly PerlinNoise _perlin;
+    private readonly Growth _growth;
+
+    private const int MinWidth = 30;
+    private const int MinHeight = 30;
+    private const int MaxWidth = 100;
+    private const int MaxHeight = 100;
+
+    public MapGenerator(int seed)
     {
-        var width = 100;
-        var height = 100;
+        _random = new Random(seed);
+        _perlin = new PerlinNoise(_random.Next());
+        _growth = new Growth(_random.Next());
+    }
+
+    public GameMap GenerateRandomMap()
+    {
+        var width = _random.Next(MinWidth, MaxWidth);
+        var height = _random.Next(MinHeight, MaxHeight);
+
+        return _random.Next(3) switch
+        {
+            0 => GenerateMapWithAnyWalls(width, height),
+            1 => GenerateMapWithThickWall(width, height),
+            _ => GenerateMapWithRoundWalls(width, height),
+        };
+    }
+
+    public GameMap GenerateMapWithThickWall(int width, int height)
+    {
         var map = new MapCell[width, height];
+        var wallMap = GenerateMapByPerlin(width, height,
+            noiseValue => Interpolation.CubicCurve(noiseValue) is > 0.6f and < 0.8f);
 
-        var noiseMap = new float[width, height];
-        var random = new Random();
-        var perlin = new PerlinNoise(random.Next());
-        var growth = new Growth(random.Next());
+        wallMap = _growth.Grow(wallMap, 2);
+        wallMap = _growth.Decrease(wallMap);
 
-        var wallMap = new bool[width, height];
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                var noise = perlin.GetNoise(x + random.NextSingle(), y + random.NextSingle());
-                noiseMap[x, y] = Math.Max(0, noise);
-                wallMap[x, y] = Interpolation.CubicCurve(noise) is > 0.6f and < 0.8f;
-            }
-        }
-
-        var iterations = 200;
-        // wallMap = growth.GrowByGameOfLive(wallMap, iterations, random.Next(6));
-        var minIterations = 4;
-        wallMap = growth.Grow(wallMap, 2);
-        wallMap = growth.Decrease(wallMap, 1);
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                map[x, y] = wallMap[x, y] ? MapCell.Wall : MapCell.Empty;
-            }
-        }
-
-        var grassMap = GetGrassMap(width, height, perlin, random, map, growth);
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if (grassMap[x, y] && map[x, y] != MapCell.Wall)
-                    map[x, y] = MapCell.Grass;
-            }
-        }
+        SetWallsOnMap(map, wallMap);
+        var grassMap = GetGrassMap(width, height, map);
+        SetGrassOnMap(map, grassMap);
 
         return new GameMap(map);
     }
 
-    public GameMap GenerateMapWith()
+    public GameMap GenerateMapWithAnyWalls(int width, int height)
     {
-        var width = 100;
-        var height = 100;
+        var wallMap = GenerateMapByPerlin(width, height, noiseValue => noiseValue is > 0.6f and < 0.8f);
+
+        var liveIterations = 100;
+        wallMap = _growth.Grow(wallMap, 2);
+        wallMap = _growth.GrowByGameOfLive(wallMap, liveIterations, 0);
+        wallMap = _growth.Median(wallMap);
+
+        var map = new MapCell[width, height];
+        SetWallsOnMap(map, wallMap);
+        var grassMap = GetGrassMap(width, height, map);
+        SetGrassOnMap(map, grassMap);
+
+        return new GameMap(map);
+    }
+
+    public GameMap GenerateMapWithRoundWalls(int width, int height)
+    {
         var map = new MapCell[width, height];
 
-        var noiseMap = new float[width, height];
-        var random = new Random();
-        var perlin = new PerlinNoise(random.Next());
-        var growth = new Growth(random.Next());
+        var wallMap = GenerateMapByPerlin(width, height,
+            noiseValue => Interpolation.QuinticCurve(noiseValue) is > 0.2f and < 0.8f);
 
-        var wallMap = new bool[width, height];
+        var liveIterations = 200;
+        wallMap = _growth.GrowByGameOfLive(wallMap, liveIterations, _random.Next(6));
+        wallMap = _growth.Decrease(wallMap);
+        wallMap = _growth.Grow(wallMap, 2);
 
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                var noise = perlin.GetNoise(x + random.NextSingle(), y + random.NextSingle());
-                noiseMap[x, y] = Math.Abs(noise);
-                wallMap[x, y] = noise is > 0.6f and < 0.8f;
-            }
-        }
+        SetWallsOnMap(map, wallMap);
 
-        var iterations = 100;
-        wallMap = growth.Grow(wallMap, 2);
-        wallMap = growth.GrowByGameOfLive(wallMap, iterations, 0);
-        wallMap = growth.Median(wallMap);
+        var grassMap = GetGrassMap(width, height, map);
+        SetGrassOnMap(map, grassMap);
 
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                map[x, y] = wallMap[x, y] ? MapCell.Wall : MapCell.Empty;
-            }
-        }
+        return new GameMap(map);
+    }
 
-        var grassMap = GetGrassMap(width, height, perlin, random, map, growth);
+
+    private static MapCell[,] SetGrassOnMap(MapCell[,] map, bool[,] grassMap)
+    {
+        var width = grassMap.GetLength(0);
+        var height = grassMap.GetLength(1);
 
         for (int x = 0; x < width; x++)
         {
@@ -102,13 +101,42 @@ public class MapGenerator
             }
         }
 
-        var finalMap = new GameMap(map);
-        finalMap.NoiseMap = noiseMap;
-        return finalMap;
+        return map;
     }
 
-    private static bool[,] GetGrassMap(int width, int height, PerlinNoise perlin, Random random, MapCell[,] map,
-        Growth growth)
+    private static MapCell[,] SetWallsOnMap(MapCell[,] map, bool[,] wallMap)
+    {
+        var width = wallMap.GetLength(0);
+        var height = wallMap.GetLength(1);
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                map[x, y] = wallMap[x, y] ? MapCell.Wall : MapCell.Empty;
+            }
+        }
+
+        return map;
+    }
+
+    private bool[,] GenerateMapByPerlin(int width, int height, Func<float, bool> condition)
+    {
+        var map = new bool[width, height];
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                var noise = _perlin.GetNoise(x + _random.NextSingle(), y + _random.NextSingle());
+                map[x, y] = condition(noise);
+            }
+        }
+
+        return map;
+    }
+
+    private bool[,] GetGrassMap(int width, int height, MapCell[,] map)
     {
         var grassMap = new bool[width, height];
         var minNoiseValue = 0.2;
@@ -118,7 +146,7 @@ public class MapGenerator
         {
             for (int y = 0; y < height; y++)
             {
-                var noise = perlin.GetNoise(x + random.NextSingle(), y + random.NextSingle());
+                var noise = _perlin.GetNoise(x + _random.NextSingle(), y + _random.NextSingle());
                 if (minNoiseValue < noise && noise < maxNoiseValue && map[x, y] != MapCell.Wall)
                     grassMap[x, y] = true;
             }
@@ -127,60 +155,7 @@ public class MapGenerator
         const int minGrowthGrass = 3;
         const int maxGrowthGrass = 7;
 
-        grassMap = growth.Grow(grassMap, random.Next(minGrowthGrass, maxGrowthGrass));
+        grassMap = _growth.Grow(grassMap, _random.Next(minGrowthGrass, maxGrowthGrass));
         return grassMap;
-    }
-
-    public GameMap GenerateMapWithVeryLongsWalls()
-    {
-        var width = 100;
-        var height = 100;
-        var map = new MapCell[width, height];
-
-        var noiseMap = new float[width, height];
-        var random = new Random();
-        var perlin = new PerlinNoise(random.Next());
-        var growth = new Growth(random.Next());
-
-        var wallMap = new bool[width, height];
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                var noise = perlin.GetNoise(x + random.NextSingle(), y + random.NextSingle());
-                noiseMap[x, y] = Math.Abs(noise);
-                wallMap[x, y] = Interpolation.QuinticCurve(noise) is > 0.2f and < 0.8f;
-            }
-        }
-
-        var iterations = 200;
-        wallMap = growth.GrowByGameOfLive(wallMap, iterations, random.Next(6));
-        var minIterations = 4;
-        wallMap = growth.Decrease(wallMap, 1);
-        wallMap = growth.Grow(wallMap, 2);
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                map[x, y] = wallMap[x, y] ? MapCell.Wall : MapCell.Empty;
-            }
-        }
-
-        var grassMap = GetGrassMap(width, height, perlin, random, map, growth);
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if (grassMap[x, y] && map[x, y] != MapCell.Wall)
-                    map[x, y] = MapCell.Grass;
-            }
-        }
-
-        var finalMap = new GameMap(map);
-        finalMap.NoiseMap = noiseMap;
-        return finalMap;
     }
 }

@@ -6,11 +6,12 @@ namespace MySnake.Model;
 public class GameModel
 {
     // TODO: Урать width, height от сюда
-    public GameModel(int mapWidth, int mapHeight)
+    public GameModel()
     {
-        var generator = new MapGenerator();
-        Map = generator.GenerateMapWith();
-        Player = new Snake(mapWidth / 2, mapHeight / 2, 10);
+        var random = new Random();
+        var generator = new MapGenerator(random.Next());
+        Map = generator.GenerateRandomMap();
+        Player = new Snake(MapWidth / 2, MapHeight / 2, 10);
         Map[Player.Head] = MapCell.Player;
         SpawnFood();
         Player.TailRemoved += RemoveSnakeTailFromMap;

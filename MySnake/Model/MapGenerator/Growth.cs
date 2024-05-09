@@ -35,7 +35,7 @@ public class Growth
         {
             for (int x = 0; x < width; x += 1 + Random.Next(randomOffset))
             {
-                for (int y = 0; y < width; y += 1 + Random.Next(randomOffset))
+                for (int y = 0; y < height; y += 1 + Random.Next(randomOffset))
                 {
                     var countNeighbors = 0;
 
