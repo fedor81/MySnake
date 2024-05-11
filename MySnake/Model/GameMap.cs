@@ -4,6 +4,7 @@ public class GameMap
 {
     private MapCell[,] Map { get; set; }
     private MapCell[,] OriginalMap { get; set; }
+    
     public readonly int Width;
     public readonly int Height;
 
@@ -17,8 +18,8 @@ public class GameMap
 
     public GameMap(MapCell[,] map)
     {
-        Map = map; 
-        OriginalMap = (MapCell[,])Map.Clone();
+        Map = map.Clone() as MapCell[,]; 
+        OriginalMap = map.Clone() as MapCell[,];
         Width = map.GetLength(0);
         Height = map.GetLength(1);
     }

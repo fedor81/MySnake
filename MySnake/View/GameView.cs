@@ -142,23 +142,23 @@ public class GameView
         var right = point.X + ViewWidth / 2;
         var left = point.X - ViewWidth / 2;
 
-        NormalizeBounds(ref top, ref bottom);
-        NormalizeBounds(ref left, ref right);
+        NormalizeBounds(ref top, ref bottom, Model.MapHeight);
+        NormalizeBounds(ref left, ref right, Model.MapWidth);
 
         return new Rectangle(left, top, bottom - top, right - left);
     }
 
-    private void NormalizeBounds(ref int lowerBound, ref int upperBound)
+    private void NormalizeBounds(ref int lowerBound, ref int upperBound, int maxValue)
     {
         if (lowerBound < 0)
         {
             upperBound -= lowerBound;
             lowerBound = 0;
         }
-        else if (upperBound > Model.MapHeight)
+        else if (upperBound > maxValue)
         {
-            lowerBound -= upperBound - Model.MapHeight;
-            upperBound = Model.MapHeight;
+            lowerBound -= upperBound - maxValue;
+            upperBound = maxValue;
         }
     }
 

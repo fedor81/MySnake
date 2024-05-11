@@ -54,14 +54,6 @@ public class MapGenerator
         return new GameMap(map);
     }
 
-    private MapCell[,] GetMap(int width, int height, bool[,] wallMap)
-    {
-        var map = new MapCell[width, height];
-        SetWallsOnMap(map, wallMap);
-        SetGrassOnMap(map);
-        return map;
-    }
-
     public GameMap GenerateMapWithAnyWalls(int width, int height)
     {
         const float minNoiseValue = 0.6f;
@@ -96,6 +88,13 @@ public class MapGenerator
 
         var map = GetMap(width, height, wallMap);
         return new GameMap(map);
+    }
+    private MapCell[,] GetMap(int width, int height, bool[,] wallMap)
+    {
+        var map = new MapCell[width, height];
+        SetWallsOnMap(map, wallMap);
+        SetGrassOnMap(map);
+        return map;
     }
 
     private static MapCell[,] SetCellsOnMap(MapCell[,] map, bool[,] cellMap, MapCell cellType,
