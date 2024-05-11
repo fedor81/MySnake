@@ -33,7 +33,7 @@ public class GameController
                 Model.MovePlayer(Direction.Down);
                 break;
             case Keys.M:
-                View.ShowMap();
+                View.ShowOrCloseMap();
                 break;
         }
     }

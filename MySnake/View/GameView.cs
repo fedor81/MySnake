@@ -36,13 +36,10 @@ public class GameView
     private Vector2 MapPosition { get; set; }
     public Vector2 ToDrawPosition { get; private set; }
 
-    public void ShowMap()
+    public void ShowOrCloseMap()
     {
         if (ToDrawBuffer == MapBuffer)
-        {
-            ToDrawBuffer = GameBuffer;
-            ToDrawPosition = Vector2.Zero;
-        }
+            SetGameBufferToDraw();
         else
         {
             ToDrawBuffer = MapBuffer;
@@ -64,9 +61,8 @@ public class GameView
         var cellHeight = WindowHeight / ViewHeight;
         CellSize = new Rectangle(0, 0, cellWidth, cellHeight);
 
-        MapBuffer = GetDrawnMap();
+        MapBuffer = GetDrawMap();
         // ReSharper disable once PossibleLossOfFraction
-        MapPosition = new Vector2(WindowWidth / 4, 0);
         GameBuffer = CreateBuffer(WindowWidth, WindowHeight);
         Update();
     }
@@ -78,17 +74,22 @@ public class GameView
             GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
     }
 
+    private void SetGameBufferToDraw()
+    {
+        ToDrawBuffer = GameBuffer;
+        ToDrawPosition = Vector2.Zero;
+    }
+
     // TODO: Подумать как вынести повторющийся код
     public void Update()
     {
-        ToDrawBuffer = GameBuffer;
+        SetGameBufferToDraw();
         GraphicsDevice.SetRenderTarget(GameBuffer);
         GraphicsDevice.Clear(BackgroundColor);
         SpriteBatch.Begin();
         DrawGamePlay();
         SpriteBatch.End();
         GraphicsDevice.SetRenderTarget(null);
-        ToDrawPosition = Vector2.Zero;
     }
 
     private void DrawGamePlay()
@@ -108,11 +109,18 @@ public class GameView
         }
     }
 
-    private RenderTarget2D GetDrawnMap()
+    private RenderTarget2D GetDrawMap()
     {
         var size = Math.Min(WindowWidth, WindowHeight);
         var buffer = CreateBuffer(size, size);
+
+        var drawCordX = (WindowWidth - buffer.Width) / 2;
+        var drawCordY = (WindowHeight - buffer.Height) / 2;
+        
+        MapPosition = new Vector2(drawCordX, drawCordY);
+        
         var cellSize = size / Math.Min(Model.MapWidth, Model.MapHeight);
+        var cell = new Rectangle(0, 0, cellSize, cellSize);
 
         GraphicsDevice.SetRenderTarget(buffer);
         GraphicsDevice.Clear(BackgroundColor);
@@ -125,7 +133,7 @@ public class GameView
             for (int y = 0; y < Model.MapHeight; y++)
             {
                 var color = _cellToColor[map[x, y]];
-                SpriteBatch.Draw(SquareTexture, new Vector2(x * cellSize, y * cellSize), color);
+                SpriteBatch.Draw(SquareTexture, new Vector2(x * cellSize, y * cellSize), cell, color);
             }
         }
 
@@ -174,5 +182,5 @@ public class GameView
 
     public Color BackgroundColor => _cellToColor[MapCell.Empty];
 
-    public void UpdateMap() => MapBuffer = GetDrawnMap();
+    public void UpdateMap() => MapBuffer = GetDrawMap();
 }
