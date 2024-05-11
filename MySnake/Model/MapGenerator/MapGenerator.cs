@@ -20,10 +20,14 @@ public class MapGenerator
         _growth = new Growth(_random.Next());
     }
 
-    public GameMap GenerateRandomMap()
+    public GameMap GenerateRandomMap(int width = 0, int height = 0)
     {
-        var width = _random.Next(MinWidth, MaxWidth);
-        var height = _random.Next(MinHeight, MaxHeight);
+        if (width == 0 || height == 0)
+        {
+            width = _random.Next(MinWidth, MaxWidth);
+            height = _random.Next(MinHeight, MaxHeight);
+        }
+
 
         return _random.Next(3) switch
         {
@@ -35,90 +39,92 @@ public class MapGenerator
 
     public GameMap GenerateMapWithThickWall(int width, int height)
     {
-        var map = new MapCell[width, height];
-        var wallMap = GenerateMapByPerlin(width, height,
-            noiseValue => Interpolation.CubicCurve(noiseValue) is > 0.6f and < 0.8f);
+        const float minNoiseValue = 0.6f;
+        const float maxNoiseValue = 0.8f;
 
-        wallMap = _growth.Grow(wallMap, 2);
+        var wallMap = GenerateMapByPerlin(width, height,
+            noiseValue => Interpolation.CubicCurve(noiseValue) is > minNoiseValue and < maxNoiseValue);
+
+        const int growIterations = 2;
+
+        wallMap = _growth.Grow(wallMap, growIterations);
         wallMap = _growth.Decrease(wallMap);
 
-        SetWallsOnMap(map, wallMap);
-        var grassMap = GetGrassMap(width, height, map);
-        SetGrassOnMap(map, grassMap);
-
+        var map = GetMap(width, height, wallMap);
         return new GameMap(map);
+    }
+
+    private MapCell[,] GetMap(int width, int height, bool[,] wallMap)
+    {
+        var map = new MapCell[width, height];
+        SetWallsOnMap(map, wallMap);
+        SetGrassOnMap(map);
+        return map;
     }
 
     public GameMap GenerateMapWithAnyWalls(int width, int height)
     {
-        var wallMap = GenerateMapByPerlin(width, height, noiseValue => noiseValue is > 0.6f and < 0.8f);
+        const float minNoiseValue = 0.6f;
+        const float maxNoiseValue = 0.8f;
 
-        var liveIterations = 100;
-        wallMap = _growth.Grow(wallMap, 2);
-        wallMap = _growth.GrowByGameOfLive(wallMap, liveIterations, 0);
+        var wallMap =
+            GenerateMapByPerlin(width, height, noiseValue => noiseValue is > minNoiseValue and < maxNoiseValue);
+
+        const int liveIterations = 100;
+        const int growIterations = 2;
+        const int randomOffset = 0;
+
+        wallMap = _growth.Grow(wallMap, growIterations);
+        wallMap = _growth.GrowByGameOfLive(wallMap, liveIterations, randomOffset);
         wallMap = _growth.Median(wallMap);
 
-        var map = new MapCell[width, height];
-        SetWallsOnMap(map, wallMap);
-        var grassMap = GetGrassMap(width, height, map);
-        SetGrassOnMap(map, grassMap);
-
+        var map = GetMap(width, height, wallMap);
         return new GameMap(map);
     }
 
     public GameMap GenerateMapWithRoundWalls(int width, int height)
     {
-        var map = new MapCell[width, height];
-
         var wallMap = GenerateMapByPerlin(width, height,
             noiseValue => Interpolation.QuinticCurve(noiseValue) is > 0.2f and < 0.8f);
 
-        var liveIterations = 200;
+        const int liveIterations = 200;
+        const int growIterations = 2;
+
         wallMap = _growth.GrowByGameOfLive(wallMap, liveIterations, _random.Next(6));
         wallMap = _growth.Decrease(wallMap);
-        wallMap = _growth.Grow(wallMap, 2);
+        wallMap = _growth.Grow(wallMap, growIterations);
 
-        SetWallsOnMap(map, wallMap);
-
-        var grassMap = GetGrassMap(width, height, map);
-        SetGrassOnMap(map, grassMap);
-
+        var map = GetMap(width, height, wallMap);
         return new GameMap(map);
     }
 
-
-    private static MapCell[,] SetGrassOnMap(MapCell[,] map, bool[,] grassMap)
+    private static MapCell[,] SetCellsOnMap(MapCell[,] map, bool[,] cellMap, MapCell cellType,
+        Func<int, int, bool> additionalCondition = null)
     {
-        var width = grassMap.GetLength(0);
-        var height = grassMap.GetLength(1);
+        var width = map.GetLength(0);
+        var height = map.GetLength(1);
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                if (grassMap[x, y] && map[x, y] != MapCell.Wall)
-                    map[x, y] = MapCell.Grass;
+                if (!cellMap[x, y]) continue;
+                if (additionalCondition == null || additionalCondition(x, y))
+                    map[x, y] = cellType;
             }
         }
 
         return map;
     }
 
-    private static MapCell[,] SetWallsOnMap(MapCell[,] map, bool[,] wallMap)
-    {
-        var width = wallMap.GetLength(0);
-        var height = wallMap.GetLength(1);
+    private MapCell[,] SetGrassOnMap(MapCell[,] map) =>
+        SetGrassOnMap(map, GetGrassMap(map.GetLength(0), map.GetLength(1)));
 
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                map[x, y] = wallMap[x, y] ? MapCell.Wall : MapCell.Empty;
-            }
-        }
+    private static MapCell[,] SetGrassOnMap(MapCell[,] map, bool[,] grassMap) =>
+        SetCellsOnMap(map, grassMap, MapCell.Grass, (x, y) => map[x, y] != MapCell.Wall);
 
-        return map;
-    }
+    private static MapCell[,] SetWallsOnMap(MapCell[,] map, bool[,] wallMap) =>
+        SetCellsOnMap(map, wallMap, MapCell.Wall);
 
     private bool[,] GenerateMapByPerlin(int width, int height, Func<float, bool> condition)
     {
@@ -136,21 +142,13 @@ public class MapGenerator
         return map;
     }
 
-    private bool[,] GetGrassMap(int width, int height, MapCell[,] map)
+    private bool[,] GetGrassMap(int width, int height)
     {
-        var grassMap = new bool[width, height];
-        var minNoiseValue = 0.2;
-        var maxNoiseValue = 0.3;
+        const double minNoiseValue = 0.2;
+        const double maxNoiseValue = 0.3;
 
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                var noise = _perlin.GetNoise(x + _random.NextSingle(), y + _random.NextSingle());
-                if (minNoiseValue < noise && noise < maxNoiseValue && map[x, y] != MapCell.Wall)
-                    grassMap[x, y] = true;
-            }
-        }
+        var grassMap = GenerateMapByPerlin(width, height,
+            noiseValue => minNoiseValue < noiseValue && noiseValue < maxNoiseValue);
 
         const int minGrowthGrass = 3;
         const int maxGrowthGrass = 7;
