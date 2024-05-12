@@ -12,7 +12,7 @@ public class MapBinder
     private const int MinNumberOfIslands = 7;
     private const int MxnNumberOfIslands = 12;
 
-    public MapBinder(int seed)
+    public MapBinder(int seed=0)
     {
         _random = new Random(seed);
         _mapGenerator = new MapGenerator(_random.Next());
@@ -25,8 +25,13 @@ public class MapBinder
             Enumerable.Range(0, numberIslands).Select(_ => _mapGenerator.GenerateRandomMap()));
         
         graph.ConnectAllNodes();
-        foreach (var edge in graph.GetEdges())
-             edge.Weight = _random.Next();
+        
+        // TODO: Нужно выдавать одинаковые веса в двух направлениях
+        foreach (var edge in graph.GetEdges()) 
+            edge.Weight = _random.Next();
+
+        // TODO: Нужно брать ребра в обе стороны либо соеденить существующие
+        graph = WorkWithGraphs.GetMinimumSpanningTreeByKruskal(graph);
 
         return graph;
     }

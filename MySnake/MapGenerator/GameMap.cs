@@ -46,6 +46,11 @@ public class GameMap
         this[point] = OriginalMap[point.X, point.Y];
     }
 
+    public override string ToString()
+    {
+        return $"GameMap({Width}:{Height})";
+    }
+
     public bool IsWithinMap(Point point) => IsWithinMap(point.X, point.Y);
     public bool IsWithinMap((int, int) coords) => IsWithinMap(coords.Item1, coords.Item2);
     public bool IsWithinMap(int x, int y) => 0 <= x && x < Width && 0 <= y && y < Height;

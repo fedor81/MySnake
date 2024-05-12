@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 
 namespace MySnake.Model;
 
-// TODO: вынести все в отдельную библиотеку solution
 public class PerlinNoise
 {
     private const int TableSize = 256;

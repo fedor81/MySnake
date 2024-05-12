@@ -4,6 +4,7 @@ public class Graph<T>
 {
     private readonly HashSet<Node<T>> _nodes = new();
     private readonly HashSet<Edge<T>> _edges = new();
+    
     public int CountNodes => _nodes.Count;
     public int CountEdges => _edges.Count;
 
@@ -14,30 +15,34 @@ public class Graph<T>
     public Graph(IEnumerable<T> values)
     {
         foreach (var value in values)
-            _nodes.Add(new Node<T>(value));
+            AddNode(value);
     }
 
     public Node<T> AddNode(T value)
     {
         var node = new Node<T>(value);
-        _nodes.Add(node);
+        AddNode(node);
         return node;
+    }
+
+    public bool AddNode(Node<T> node)
+    {
+        return _nodes.Add(node);
     }
 
     public void RemoveEdge(Edge<T> edge)
     {
         if (!_edges.Contains(edge))
             throw new Exception("Edge is not contained in the graph");
-
+        
         _edges.Remove(edge);
-        edge.DeleteEdge();
     }
 
     public void RemoveEdge(Node<T> from, Node<T> to)
     {
         if (!_nodes.Contains(from) || !_nodes.Contains(to))
             throw new Exception("The nodes are not in the graph");
-
+        
         RemoveEdge(new Edge<T>(from, to));
     }
 
@@ -51,8 +56,11 @@ public class Graph<T>
 
     public void RemoveNode(Node<T> node)
     {
-        foreach (var edge in node.Edges)
-            RemoveEdgeBidirectionally(edge.From, edge.To);
+        if (!_nodes.Contains(node))
+            throw new Exception("Node is not contained in the graph");
+        
+        foreach (var edge in _edges.Where(edge => edge.From.Equals(node) || edge.To.Equals(node)))
+            RemoveEdge(edge);
 
         _nodes.Remove(node);
     }
@@ -72,7 +80,7 @@ public class Graph<T>
         if (!_nodes.Contains(node))
             throw new Exception("Node is not contained in the graph");
 
-        foreach (var edge in node.Edges)
+        foreach (var edge in _edges.Where(edge => edge.From.Equals(node)))
             yield return edge.To;
     }
 
@@ -82,11 +90,12 @@ public class Graph<T>
             throw new Exception("Node cannot be connected to itself");
         if (!_nodes.Contains(from) || !_nodes.Contains(to))
             throw new Exception("The nodes are not in the graph");
-
+        
         var edge = new Edge<T>(from, to, weight);
-        edge.Save();
         return _edges.Add(edge);
     }
+
+    public bool Connect(Edge<T> edge) => Connect(edge.From, edge.To, edge.Weight);
 
     public void ConnectBidirectionally(Node<T> node1, Node<T> node2, int weight=0)
     {
@@ -101,8 +110,8 @@ public class Graph<T>
             ConnectBidirectionally(node1, node2);
     }
 
-    public bool Contains(Node<T> node) => _nodes.Contains(node);
-    public bool Contains(Edge<T> edge) => _edges.Contains(edge);
+    public bool ContainsNode(Node<T> node) => _nodes.Contains(node);
+    public bool ContainsEdge(Edge<T> edge) => _edges.Contains(edge);
 
     public IEnumerable<Node<T>> GetNodes() => _nodes;
     public IEnumerable<Edge<T>> GetEdges() => _edges;
@@ -110,18 +119,16 @@ public class Graph<T>
 
 public class Node<T>
 {
-    public T Value { get; set; }
-    internal readonly HashSet<Edge<T>> Edges = new();
+    public T Value { get; }
 
     public Node(T value)
     {
         Value = value;
     }
 
-    internal void RemoveEdge(Edge<T> edge)
+    public override string ToString()
     {
-        if (!Edges.Remove(edge))
-            throw new Exception("Node does not contain an edge");
+        return $"Node(Value: {Value})";
     }
 }
 
@@ -136,16 +143,6 @@ public class Edge<T>
         From = from;
         To = to;
         Weight = weight;
-    }
-
-    internal void Save()
-    {
-        From.Edges.Add(this);
-    }
-
-    internal void DeleteEdge()
-    {
-        From.RemoveEdge(this);
     }
 
     public bool Equals(Edge<T> edge)
@@ -183,5 +180,10 @@ public class Edge<T>
 
             return hash;
         }
+    }
+
+    public override string ToString()
+    {
+        return $"Edge From: {From}, To: {To}";
     }
 }

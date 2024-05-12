@@ -80,18 +80,23 @@ public class GameView
         ToDrawPosition = Vector2.Zero;
     }
 
-    // TODO: Подумать как вынести повторющийся код
-    public void Update()
+    private void DrawOnBuffer(RenderTarget2D buffer, Action drawAction)
     {
-        SetGameBufferToDraw();
-        GraphicsDevice.SetRenderTarget(GameBuffer);
+        GraphicsDevice.SetRenderTarget(buffer);
         GraphicsDevice.Clear(BackgroundColor);
         SpriteBatch.Begin();
-        DrawGamePlay();
+        drawAction();
         SpriteBatch.End();
         GraphicsDevice.SetRenderTarget(null);
     }
 
+    public void Update()
+    {
+        SetGameBufferToDraw();
+        DrawOnBuffer(GameBuffer, DrawGamePlay);
+    }
+
+    // TODO: Скрытие змеи в траве
     private void DrawGamePlay()
     {
         var playerHead = Model.GetPlayerHead();
@@ -117,31 +122,26 @@ public class GameView
 
         var drawCordX = (WindowWidth - buffer.Width) / 2;
         var drawCordY = (WindowHeight - buffer.Height) / 2;
-        
-        MapPosition = new Vector2(drawCordX, drawCordY);
-        
-        var cell = new Rectangle(0, 0, cellSize, cellSize);
 
-        GraphicsDevice.SetRenderTarget(buffer);
-        GraphicsDevice.Clear(BackgroundColor);
-        SpriteBatch.Begin();
+        MapPosition = new Vector2(drawCordX, drawCordY);
+
+        var cell = new Rectangle(0, 0, cellSize, cellSize);
 
         var map = Model.GetOriginalMap();
 
-        for (int x = 0; x < Model.MapWidth; x++)
+        DrawOnBuffer(buffer, () =>
         {
-            for (int y = 0; y < Model.MapHeight; y++)
+            for (int x = 0; x < Model.MapWidth; x++)
             {
-                var color = _cellToColor[map[x, y]];
-                cell.X = x * cell.Width;
-                cell.Y = y * cell.Height;
-                
-                SpriteBatch.Draw(SquareTexture, cell, color);
+                cell.X = x * cellSize;
+                for (int y = 0; y < Model.MapHeight; y++)
+                {
+                    cell.Y = y * cellSize;
+                    var color = _cellToColor[map[x, y]];
+                    SpriteBatch.Draw(SquareTexture, cell, color);
+                }
             }
-        }
-
-        SpriteBatch.End();
-        GraphicsDevice.SetRenderTarget(null);
+        });
 
         return buffer;
     }

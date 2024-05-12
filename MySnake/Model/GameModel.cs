@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MySnake.Model;
 
 public class GameModel
 {
-    // TODO: Урать width, height от сюда
     public GameModel()
     {
         var random = new Random();
-        var generator = new MapGenerator(random.Next());
-        Map = generator.GenerateRandomMap();
+        var binder = new MapBinder(random.Next());
+        Map = binder.CreateGameMap().GetNodes().First().Value;
         Player = new Snake(MapWidth / 2, MapHeight / 2, 10);
         Map[Player.Head] = MapCell.Player;
         SpawnFood();
