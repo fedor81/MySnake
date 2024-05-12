@@ -25,7 +25,10 @@ public class MapGenerator
         if (width == 0 || height == 0)
         {
             width = _random.Next(MinWidth, MaxWidth);
+            width += _random.Next(MaxWidth - width);
+            
             height = _random.Next(MinHeight, MaxHeight);
+            height += _random.Next(MaxHeight - height);
         }
 
 
