@@ -89,11 +89,33 @@ public class MapGenerator
         var map = GetMap(width, height, wallMap);
         return new GameMap(map);
     }
+
     private MapCell[,] GetMap(int width, int height, bool[,] wallMap)
     {
         var map = new MapCell[width, height];
         SetWallsOnMap(map, wallMap);
         SetGrassOnMap(map);
+        SetBoundaryWalls(map);
+        return map;
+    }
+
+    private static MapCell[,] SetBoundaryWalls(MapCell[,] map)
+    {
+        var width = map.GetLength(0);
+        var height = map.GetLength(1);
+
+        for (int x = 0; x < width; x++)
+        {
+            map[x, 0] = MapCell.Wall;
+            map[x, height - 1] = MapCell.Wall;
+        }
+
+        for (int y = 0; y < height; y++)
+        {
+            map[0, y] = MapCell.Wall;
+            map[width - 1, y] = MapCell.Wall;
+        }
+
         return map;
     }
 

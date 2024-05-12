@@ -111,15 +111,15 @@ public class GameView
 
     private RenderTarget2D GetDrawMap()
     {
-        var size = Math.Min(WindowWidth, WindowHeight);
-        var buffer = CreateBuffer(size, size);
+        var minSize = Math.Min(WindowWidth, WindowHeight);
+        var cellSize = minSize / Math.Max(Model.MapWidth, Model.MapHeight);
+        var buffer = CreateBuffer(Model.MapWidth * cellSize, Model.MapHeight * cellSize);
 
         var drawCordX = (WindowWidth - buffer.Width) / 2;
         var drawCordY = (WindowHeight - buffer.Height) / 2;
         
         MapPosition = new Vector2(drawCordX, drawCordY);
         
-        var cellSize = size / Math.Min(Model.MapWidth, Model.MapHeight);
         var cell = new Rectangle(0, 0, cellSize, cellSize);
 
         GraphicsDevice.SetRenderTarget(buffer);
@@ -133,7 +133,10 @@ public class GameView
             for (int y = 0; y < Model.MapHeight; y++)
             {
                 var color = _cellToColor[map[x, y]];
-                SpriteBatch.Draw(SquareTexture, new Vector2(x * cellSize, y * cellSize), cell, color);
+                cell.X = x * cell.Width;
+                cell.Y = y * cell.Height;
+                
+                SpriteBatch.Draw(SquareTexture, cell, color);
             }
         }
 
