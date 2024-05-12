@@ -1,36 +1,41 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace MySnake.Model;
+namespace Graphs;
 
 public class Graph<T>
 {
-    public readonly HashSet<Node<T>> Nodes;
-    public readonly HashSet<Edge<T>> Edges = new();
+    private readonly HashSet<Node<T>> _nodes = new();
+    private readonly HashSet<Edge<T>> _edges = new();
+    public int CountNodes => _nodes.Count;
+    public int CountEdges => _edges.Count;
+
+    public Graph()
+    {
+    }
 
     public Graph(IEnumerable<T> values)
     {
-        Nodes = values.Select(value => new Node<T>(value)).ToHashSet();
+        foreach (var value in values)
+            _nodes.Add(new Node<T>(value));
     }
 
-    public void AddNode(T value)
+    public Node<T> AddNode(T value)
     {
-        Nodes.Add(new Node<T>(value));
+        var node = new Node<T>(value);
+        _nodes.Add(node);
+        return node;
     }
 
     public void RemoveEdge(Edge<T> edge)
     {
-        if (!Edges.Contains(edge))
+        if (!_edges.Contains(edge))
             throw new Exception("Edge is not contained in the graph");
 
-        Edges.Remove(edge);
+        _edges.Remove(edge);
         edge.DeleteEdge();
     }
 
     public void RemoveEdge(Node<T> from, Node<T> to)
     {
-        if (!Nodes.Contains(from) || !Nodes.Contains(to))
+        if (!_nodes.Contains(from) || !_nodes.Contains(to))
             throw new Exception("The nodes are not in the graph");
 
         RemoveEdge(new Edge<T>(from, to));
@@ -49,12 +54,12 @@ public class Graph<T>
         foreach (var edge in node.Edges)
             RemoveEdgeBidirectionally(edge.From, edge.To);
 
-        Nodes.Remove(node);
+        _nodes.Remove(node);
     }
 
     public bool IsConnected(Node<T> from, Node<T> to)
     {
-        return Edges.Contains(new Edge<T>(from, to));
+        return _edges.Contains(new Edge<T>(from, to));
     }
 
     public bool IsConnectedBidirectionally(Node<T> node1, Node<T> node2)
@@ -64,37 +69,43 @@ public class Graph<T>
 
     public IEnumerable<Node<T>> GetNeighbors(Node<T> node)
     {
-        if (!Nodes.Contains(node))
+        if (!_nodes.Contains(node))
             throw new Exception("Node is not contained in the graph");
 
         foreach (var edge in node.Edges)
             yield return edge.To;
     }
 
-    public bool Connect(Node<T> from, Node<T> to)
+    public bool Connect(Node<T> from, Node<T> to, int weight=0)
     {
         if (from.Equals(to))
             throw new Exception("Node cannot be connected to itself");
-        if (!Nodes.Contains(from) || !Nodes.Contains(to))
+        if (!_nodes.Contains(from) || !_nodes.Contains(to))
             throw new Exception("The nodes are not in the graph");
 
-        var edge = new Edge<T>(from, to);
+        var edge = new Edge<T>(from, to, weight);
         edge.Save();
-        return Edges.Add(edge);
+        return _edges.Add(edge);
     }
 
-    public void ConnectBidirectionally(Node<T> node1, Node<T> node2)
+    public void ConnectBidirectionally(Node<T> node1, Node<T> node2, int weight=0)
     {
-        Connect(node1, node2);
-        Connect(node2, node1);
+        Connect(node1, node2, weight);
+        Connect(node2, node1, weight);
     }
 
     public void ConnectAllNodes()
     {
-        foreach (var node1 in Nodes)
-        foreach (var node2 in Nodes.Where(node2 => node1 != node2))
+        foreach (var node1 in _nodes)
+        foreach (var node2 in _nodes.Where(node2 => node1 != node2))
             ConnectBidirectionally(node1, node2);
     }
+
+    public bool Contains(Node<T> node) => _nodes.Contains(node);
+    public bool Contains(Edge<T> edge) => _edges.Contains(edge);
+
+    public IEnumerable<Node<T>> GetNodes() => _nodes;
+    public IEnumerable<Edge<T>> GetEdges() => _edges;
 }
 
 public class Node<T>
@@ -118,11 +129,13 @@ public class Edge<T>
 {
     public Node<T> From { get; }
     public Node<T> To { get; }
+    public int Weight { get; set; }
 
-    public Edge(Node<T> from, Node<T> to)
+    public Edge(Node<T> from, Node<T> to, int weight=0)
     {
         From = from;
         To = to;
+        Weight = weight;
     }
 
     internal void Save()
@@ -139,13 +152,13 @@ public class Edge<T>
     {
         return From.Equals(edge.From) && To.Equals(edge.To);
     }
-    
-    public override bool Equals(object obj)
+
+    public override bool Equals(object? obj)
     {
         if (obj == null || GetType() != obj.GetType())
             return false;
 
-        var edge = (Edge<T>) obj;
+        var edge = (Edge<T>)obj;
         return From.Equals(edge.From) && To.Equals(edge.To);
     }
 
