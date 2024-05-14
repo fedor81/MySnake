@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using Microsoft.Xna.Framework;
 
-namespace MySnake.Model;
+namespace MySnake.MapGenerator;
 
 public class PerlinNoise
 {

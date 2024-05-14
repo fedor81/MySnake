@@ -1,6 +1,6 @@
 using System;
 
-namespace MySnake.Model;
+namespace MySnake.MapGenerator;
 
 public class Growth
 {

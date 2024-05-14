@@ -12,10 +12,14 @@ public class Graph<T>
     {
     }
 
-    public Graph(IEnumerable<T> values)
+    public Graph(IEnumerable<T> values) : this(values.Select(value => new Node<T>(value)))
     {
-        foreach (var value in values)
-            AddNode(value);
+    }
+
+    public Graph(IEnumerable<Node<T>> nodes)
+    {
+        foreach (var node in nodes)
+            AddNode(node);
     }
 
     public Node<T> AddNode(T value)
@@ -84,7 +88,7 @@ public class Graph<T>
             yield return edge.To;
     }
 
-    public bool Connect(Node<T> from, Node<T> to, int weight=0)
+    public Edge<T> Connect(Node<T> from, Node<T> to, int weight=0)
     {
         if (from.Equals(to))
             throw new Exception("Node cannot be connected to itself");
@@ -92,10 +96,11 @@ public class Graph<T>
             throw new Exception("The nodes are not in the graph");
         
         var edge = new Edge<T>(from, to, weight);
-        return _edges.Add(edge);
+        _edges.Add(edge);
+        return edge;
     }
 
-    public bool Connect(Edge<T> edge) => Connect(edge.From, edge.To, edge.Weight);
+    public Edge<T> Connect(Edge<T> edge) => Connect(edge.From, edge.To, edge.Weight);
 
     public void ConnectBidirectionally(Node<T> node1, Node<T> node2, int weight=0)
     {
@@ -128,7 +133,7 @@ public class Node<T>
 
     public override string ToString()
     {
-        return $"Node(Value: {Value})";
+        return $"Node({Value})";
     }
 }
 
@@ -184,6 +189,6 @@ public class Edge<T>
 
     public override string ToString()
     {
-        return $"Edge From: {From}, To: {To}";
+        return $"Edge From: {From}, To: {To}, Weight: {Weight}";
     }
 }

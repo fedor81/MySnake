@@ -1,6 +1,7 @@
 using System;
+using MySnake.Model;
 
-namespace MySnake.Model;
+namespace MySnake.MapGenerator;
 
 public class MapGenerator
 {

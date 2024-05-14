@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using Graphs;
 
-namespace MySnake.Model;
+namespace MySnake.MapGenerator;
 
 public class MapBinder
 {
@@ -36,6 +36,7 @@ public class MapBinder
         return graph;
     }
 
+    // TODO
     private void MakePassBetweenMaps()
     {
     }

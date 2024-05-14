@@ -1,4 +1,7 @@
-namespace MySnake.Model;
+
+using MySnake.Model;
+
+namespace MySnake.MapGenerator;
 
 public class GameMap
 {
