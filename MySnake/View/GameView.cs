@@ -114,6 +114,7 @@ public class GameView
         }
     }
 
+    // TODO: Разбить Вьюшку
     private RenderTarget2D GetDrawMap()
     {
         var minSize = Math.Min(WindowWidth, WindowHeight);

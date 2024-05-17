@@ -7,14 +7,20 @@ namespace MySnake.Model;
 
 public class GameModel
 {
+    private const int PlayerInitLength = 10;
+    
     public GameModel()
     {
         var random = new Random();
         var binder = new MapBinder(random.Next());
+        
+        FoodSpawner = new FoodSpawner(1);
+        FoodSpawner.SpawnFood += SpawnFood;
+        
         Map = binder.CreateGameMap().GetNodes().First().Value;
-        Player = new Snake(MapWidth / 2, MapHeight / 2, 10);
+        Player = new Snake(MapWidth / 2, MapHeight / 2, PlayerInitLength);
         Map[Player.Head] = MapCell.Player;
-        SpawnFood();
+        
         Player.TailRemoved += RemoveSnakeTailFromMap;
         Player.HeadMoved += AddSnakeBodyToMap;
     }
@@ -22,7 +28,9 @@ public class GameModel
     public event Action StateChanged;
     public event Action MapChanged;
 
+    private FoodSpawner FoodSpawner { get; set; }
     public GameMap Map { get; set; }
+    
     public int MapWidth => Map.Width;
     public int MapHeight => Map.Height;
 
@@ -33,7 +41,8 @@ public class GameModel
     public MapCell GetMapCell(int x, int y) => Map[x, y];
     public MapCell[,] GetOriginalMap() => Map.GetOriginalMap();
 
-    // TODO: Damage при столкновении со стеной
+    private long GameTime { get; set; }
+
     public void MovePlayer(Direction direction)
     {
         var nextPoint = Player.Head.With(Orientation.DirectionToMove[direction]);
@@ -41,15 +50,14 @@ public class GameModel
 
         var mapCell = Map[nextPoint];
 
-        if (mapCell == MapCell.Player)
+        if (mapCell is MapCell.Snake or MapCell.Wall or MapCell.Player)
             Player.GetDamage();
         else
         {
             if (mapCell == MapCell.Food)
             {
                 Player.Grow();
-                Map[nextPoint] = MapCell.Empty;
-                SpawnFood();
+                FoodSpawner.EatFood();
             }
             Player.Move(direction);
         }
@@ -73,7 +81,7 @@ public class GameModel
         {
             var x = new Random().Next(0, MapWidth);
             var y = new Random().Next(0, MapHeight);
-            if (Map[x, y] != MapCell.Empty) continue;
+            if (Map[x, y] is not MapCell.Empty or MapCell.Grass) continue;
             Map[x, y] = MapCell.Food;
             break;
         }
@@ -81,6 +89,8 @@ public class GameModel
 
     private void Update()
     {
+        GameTime++;
         StateChanged?.Invoke();
+        FoodSpawner.Update(GameTime);
     }
 }
