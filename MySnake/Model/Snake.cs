@@ -18,7 +18,7 @@ public class Snake
     private bool _grow;
 
     public bool CanMove(Direction direction) =>
-        _previousMove == null || direction != Orientation.OppositeMoves[(Direction)_previousMove];
+        Length == 1 || _previousMove == null || direction != Orientation.OppositeMoves[(Direction)_previousMove];
 
     public Snake(int x, int y, int length)
     {

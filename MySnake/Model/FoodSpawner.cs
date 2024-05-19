@@ -1,21 +1,24 @@
 using System;
-using System.Runtime.InteropServices;
 
 namespace MySnake.Model;
 
 public class FoodSpawner
 {
-    public event Action SpawnFood;
+    public Action SpawnFood;
     private double StartFoodSpawnFactor { get; set; }
     private double FoodSpawnFactor { get; set; }
     private int NumberFoodEaten { get; set; }
     private Func<int, double> _getDelta;
+    private int TimeSinceLastEat { get; set; }
 
     public FoodSpawner(double startFoodSpawnFactor)
     {
         StartFoodSpawnFactor = startFoodSpawnFactor;
+        
         // TODO: Случайный выбор функции спавна еды
         _getDelta = Exp;
+        
+        EatFood();
     }
 
     private static readonly Func<int, double> Sin = n => 1 + Math.Sin(n);
@@ -33,10 +36,10 @@ public class FoodSpawner
         NumberFoodEaten++;
         FoodSpawnFactor = StartFoodSpawnFactor * _getDelta(NumberFoodEaten);
     }
-
     public void Update(double gameTime)
     {
-        if (gameTime >= FoodSpawnFactor)
+        // TODO
+        if (gameTime % FoodSpawnFactor == 0)
             SpawnFood?.Invoke();
     }
 }

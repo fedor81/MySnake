@@ -7,8 +7,9 @@ namespace MySnake.Model;
 
 public class GameModel
 {
-    private const int PlayerInitLength = 10;
+    private const int PlayerInitLength = 5;
     
+    // TODO: Player не должен спавниться в стене
     public GameModel()
     {
         var random = new Random();
@@ -21,7 +22,7 @@ public class GameModel
         Player = new Snake(MapWidth / 2, MapHeight / 2, PlayerInitLength);
         Map[Player.Head] = MapCell.Player;
         
-        Player.TailRemoved += RemoveSnakeTailFromMap;
+        Player.TailRemoved += RevertMapCell;
         Player.HeadMoved += AddSnakeBodyToMap;
     }
 
@@ -29,18 +30,18 @@ public class GameModel
     public event Action MapChanged;
 
     private FoodSpawner FoodSpawner { get; set; }
-    public GameMap Map { get; set; }
+    private GameMap Map { get; set; }
     
     public int MapWidth => Map.Width;
     public int MapHeight => Map.Height;
+    
+    public MapCell GetMapCell(int x, int y) => Map[x, y];
+    public MapCell GetOriginalMapCell(int x, int y) => Map.GetOriginalMapCell(x, y);
 
     private Snake Player { get; set; }
     private List<Snake> _snakes = new();
 
     public Point GetPlayerHead() => Player.Head;
-    public MapCell GetMapCell(int x, int y) => Map[x, y];
-    public MapCell[,] GetOriginalMap() => Map.GetOriginalMap();
-
     private long GameTime { get; set; }
 
     public void MovePlayer(Direction direction)
@@ -70,7 +71,7 @@ public class GameModel
         Map[point] = cell;
     }
 
-    private void RemoveSnakeTailFromMap(object snake, Point point)
+    private void RevertMapCell(object sender, Point point)
     {
         Map.RevertCell(point);
     }
@@ -81,7 +82,8 @@ public class GameModel
         {
             var x = new Random().Next(0, MapWidth);
             var y = new Random().Next(0, MapHeight);
-            if (Map[x, y] is not MapCell.Empty or MapCell.Grass) continue;
+
+            if (Map[x, y] is not (MapCell.Empty or MapCell.Grass)) continue;
             Map[x, y] = MapCell.Food;
             break;
         }
@@ -90,6 +92,7 @@ public class GameModel
     private void Update()
     {
         GameTime++;
+        Map.Update();
         StateChanged?.Invoke();
         FoodSpawner.Update(GameTime);
     }

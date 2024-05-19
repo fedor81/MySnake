@@ -99,17 +99,24 @@ public class GameView
     // TODO: Скрытие змеи в траве
     private void DrawGamePlay()
     {
+        const float hidingFromGrass = 0.4f;
         var playerHead = Model.GetPlayerHead();
         var bounds = GetViewBounds(playerHead);
 
         for (int y = bounds.Top; y < bounds.Bottom; y++)
         {
-            var cordY = (y - bounds.Top) * CellSize.Height;
+            var localY = (y - bounds.Top) * CellSize.Height;
+
             for (int x = bounds.Left; x < bounds.Right; x++)
             {
-                var cordX = (x - bounds.Left) * CellSize.Width;
-                var color = _cellToColor[Model.GetMapCell(x, y)];
-                SpriteBatch.Draw(SquareTexture, new Vector2(cordX, cordY), CellSize, color);
+                var localX = (x - bounds.Left) * CellSize.Width;
+                var cell = Model.GetMapCell(x, y);
+                var color = _cellToColor[cell];
+
+                if (cell is MapCell.Player or MapCell.Snake && Model.GetOriginalMapCell(x, y) == MapCell.Grass)
+                    color = Color.Lerp(color, Color.Black, hidingFromGrass);
+
+                SpriteBatch.Draw(SquareTexture, new Vector2(localX, localY), CellSize, color);
             }
         }
     }
@@ -126,20 +133,20 @@ public class GameView
 
         MapPosition = new Vector2(drawCordX, drawCordY);
 
-        var cell = new Rectangle(0, 0, cellSize, cellSize);
-
-        var map = Model.GetOriginalMap();
+        var rect = new Rectangle(0, 0, cellSize, cellSize);
 
         DrawOnBuffer(buffer, () =>
         {
             for (int x = 0; x < Model.MapWidth; x++)
             {
-                cell.X = x * cellSize;
+                rect.X = x * cellSize;
                 for (int y = 0; y < Model.MapHeight; y++)
                 {
-                    cell.Y = y * cellSize;
-                    var color = _cellToColor[map[x, y]];
-                    SpriteBatch.Draw(SquareTexture, cell, color);
+                    var mapCell = Model.GetOriginalMapCell(x, y);
+                    var color = _cellToColor[mapCell];
+
+                    rect.Y = y * cellSize;
+                    SpriteBatch.Draw(SquareTexture, rect, color);
                 }
             }
         });

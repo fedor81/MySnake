@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Graphs;
+using MySnake.Model;
 
 namespace MySnake.MapGenerator;
 
