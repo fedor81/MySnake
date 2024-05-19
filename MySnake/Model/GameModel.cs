@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using MySnake.MapGenerator;
 
@@ -22,10 +23,12 @@ public class GameModel
         Player = new Snake(MapWidth / 2, MapHeight / 2, PlayerInitLength);
         Map[Player.Head] = MapCell.Player;
         
-        Player.TailRemoved += RevertMapCell;
-        Player.HeadMoved += AddSnakeBodyToMap;
+        Snake.TailRemoved += RevertMapCell;
+        Snake.HeadMoved += AddSnakeBodyToMap;
+        Snake.SnakeDied += ProcessSnakeDied;
     }
 
+    public Action Exit;
     public event Action StateChanged;
     public event Action MapChanged;
 
@@ -39,7 +42,7 @@ public class GameModel
     public MapCell GetOriginalMapCell(int x, int y) => Map.GetOriginalMapCell(x, y);
 
     private Snake Player { get; set; }
-    private List<Snake> _snakes = new();
+    private HashSet<Snake> _snakes = new();
 
     public Point GetPlayerHead() => Player.Head;
     private long GameTime { get; set; }
@@ -87,6 +90,14 @@ public class GameModel
             Map[x, y] = MapCell.Food;
             break;
         }
+    }
+
+    private void ProcessSnakeDied(Snake snake)
+    {
+        if (snake.Equals(Player))
+            Exit?.Invoke();
+        else
+            _snakes.Remove(snake);
     }
 
     private void Update()

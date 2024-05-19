@@ -5,13 +5,14 @@ namespace MySnake.Model;
 
 public class Snake
 {
-    public event EventHandler<Point> TailRemoved;
-    public event EventHandler<Point> HeadMoved;
+    public static event EventHandler<Point> TailRemoved;
+    public static event EventHandler<Point> HeadMoved;
     public event Action<Snake> SnakeGotDamage;
+    public static event Action<Snake> SnakeDied;
 
     public Point Head { get; private set; }
     public IEnumerable<Point> Body => _body;
-    public int Length => _body.Count + 1;
+    public int Length => _body.Count;
     private readonly Queue<Point> _body = new();
 
     private Direction? _previousMove;
@@ -23,7 +24,7 @@ public class Snake
     public Snake(int x, int y, int length)
     {
         Head = new Point(x, y);
-        for (int i = 1; i < length; i++) _body.Enqueue(new Point(x, y));
+        for (int i = 0; i < length; i++) _body.Enqueue(new Point(x, y));
     }
 
     public void Move(Direction direction)
@@ -36,8 +37,8 @@ public class Snake
 
     private void Move(int x, int y)
     {
-        _body.Enqueue(Head);
         Head = Head.With(x, y);
+        _body.Enqueue(Head);
         HeadMoved?.Invoke(this, Head);
 
         if (_grow)
@@ -53,5 +54,8 @@ public class Snake
     {
         RemoveTail();
         SnakeGotDamage?.Invoke(this);
+        
+        if (Length == 0)
+            SnakeDied?.Invoke(this);
     }
 }

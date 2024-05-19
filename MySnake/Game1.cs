@@ -32,6 +32,7 @@ public class Game1 : Game
 
         _model.StateChanged += _view.Update;
         _model.MapChanged += _view.UpdateMap;
+        _model.Exit += Exit;
 
         Window.KeyDown += _controller.KeyDown;
         Window.ClientSizeChanged += _view.SetWindowSize;
