@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MySnake.Model;
+using MySnake.Tools;
 using Point = MySnake.Model.Point;
 
 namespace MySnake.View;
@@ -96,27 +97,32 @@ public class GameView
         DrawOnBuffer(GameBuffer, DrawGamePlay);
     }
 
-    // TODO: Скрытие змеи в траве
     private void DrawGamePlay()
     {
         const float hidingFromGrass = 0.4f;
         var playerHead = Model.GetPlayerHead();
         var bounds = GetViewBounds(playerHead);
+        var occupiedPlayerSpace = Model.GetOccupiedSpaceByPlayer();
 
         for (int y = bounds.Top; y < bounds.Bottom; y++)
         {
-            var localY = (y - bounds.Top) * CellSize.Height;
+            var cordY = (y - bounds.Top) * CellSize.Height;
 
             for (int x = bounds.Left; x < bounds.Right; x++)
             {
-                var localX = (x - bounds.Left) * CellSize.Width;
+                var point = new Point(x, y);
+                var cordX = (x - bounds.Left) * CellSize.Width;
                 var cell = Model.GetMapCell(x, y);
                 var color = _cellToColor[cell];
 
-                if (cell is MapCell.Player or MapCell.Snake && Model.GetOriginalMapCell(x, y) == MapCell.Grass)
-                    color = Color.Lerp(color, Color.Black, hidingFromGrass);
+                if (Model.GetOriginalMapCell(x, y) == MapCell.Grass)
+                {
+                    if (cell is MapCell.Player || occupiedPlayerSpace.Contains(point))
+                        color = Color.Lerp(color, Color.Black, hidingFromGrass);
+                    else if (cell is MapCell.Snake) color = _cellToColor[MapCell.Grass];
+                }
 
-                SpriteBatch.Draw(SquareTexture, new Vector2(localX, localY), CellSize, color);
+                SpriteBatch.Draw(SquareTexture, new Vector2(cordX, cordY), CellSize, color);
             }
         }
     }

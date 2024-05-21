@@ -1,31 +1,42 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using MySnake.MapGenerator;
+using MySnake.Tools;
 
 namespace MySnake.Model;
 
 public class GameModel
 {
     private const int PlayerInitLength = 5;
-    
+
     // TODO: Player не должен спавниться в стене
     public GameModel()
     {
         var random = new Random();
         var binder = new MapBinder(random.Next());
-        
+
         FoodSpawner = new FoodSpawner(1);
         FoodSpawner.SpawnFood += SpawnFood;
-        
+
         Map = binder.CreateGameMap().GetNodes().First().Value;
+
+        Snake.TailRemovedStatic += RevertMapCell;
+        Snake.HeadMovedStatic += AddSnakeBodyToMap;
+        Snake.SnakeDiedStatic += ProcessSnakeDied;
+
         Player = new Snake(MapWidth / 2, MapHeight / 2, PlayerInitLength);
-        Map[Player.Head] = MapCell.Player;
-        
-        Snake.TailRemoved += RevertMapCell;
-        Snake.HeadMoved += AddSnakeBodyToMap;
-        Snake.SnakeDied += ProcessSnakeDied;
+
+        AddSnakeToGame(Player, true);
+
+        var x = MapWidth / 2 + 1;
+        var y = MapHeight / 2 + 1;
+        while (Map[new Point(x, y)] != MapCell.Grass)
+        {
+            x++;
+            y++;
+        }
+        AddSnakeToGame(new Snake(x, y, PlayerInitLength));
     }
 
     public Action Exit;
@@ -34,10 +45,10 @@ public class GameModel
 
     private FoodSpawner FoodSpawner { get; set; }
     private GameMap Map { get; set; }
-    
+
     public int MapWidth => Map.Width;
     public int MapHeight => Map.Height;
-    
+
     public MapCell GetMapCell(int x, int y) => Map[x, y];
     public MapCell GetOriginalMapCell(int x, int y) => Map.GetOriginalMapCell(x, y);
 
@@ -45,7 +56,7 @@ public class GameModel
     private HashSet<Snake> _snakes = new();
 
     public Point GetPlayerHead() => Player.Head;
-    private long GameTime { get; set; }
+    private int GameTime { get; set; }
 
     public void MovePlayer(Direction direction)
     {
@@ -63,8 +74,10 @@ public class GameModel
                 Player.Grow();
                 FoodSpawner.EatFood();
             }
+
             Player.Move(direction);
         }
+
         Update();
     }
 
@@ -107,4 +120,12 @@ public class GameModel
         StateChanged?.Invoke();
         FoodSpawner.Update(GameTime);
     }
+
+    private void AddSnakeToGame(Snake snake, bool isPlayer = false)
+    {
+        _snakes.Add(snake);
+        Map[snake.Head] = isPlayer ? MapCell.Player : MapCell.Snake;
+    }
+
+    public HashSet<Point> GetOccupiedSpaceByPlayer() => Player.GetSpaceOccupiedBySnake();
 }

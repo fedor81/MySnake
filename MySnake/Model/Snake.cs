@@ -1,19 +1,27 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using MySnake.Tools;
 
 namespace MySnake.Model;
 
 public class Snake
 {
-    public static event EventHandler<Point> TailRemoved;
-    public static event EventHandler<Point> HeadMoved;
+    public static event EventHandler<Point> TailRemovedStatic;
+    public event EventHandler<Point> TailRemoved;
+    public static event EventHandler<Point> HeadMovedStatic;
     public event Action<Snake> SnakeGotDamage;
-    public static event Action<Snake> SnakeDied;
+    public static event Action<Snake> SnakeDiedStatic;
 
     public Point Head { get; private set; }
     public IEnumerable<Point> Body => _body;
     public int Length => _body.Count;
     private readonly Queue<Point> _body = new();
+    
+    // TODO: Можно увеличивать дальность обзора, когда player кушает какие-нибудь бонусы
+    private Func<Point, IEnumerable<Point>> _getNeighbors = Orientation.Get8Neighbors;
+    private readonly Queue<HashSet<Point>> _occupiedSpace = new();
 
     private Direction? _previousMove;
     private bool _grow;
@@ -24,7 +32,11 @@ public class Snake
     public Snake(int x, int y, int length)
     {
         Head = new Point(x, y);
-        for (int i = 0; i < length; i++) _body.Enqueue(new Point(x, y));
+        for (int i = 0; i < length; i++)
+        {
+            _body.Enqueue(new Point(x, y));
+            SaveOccupiedPointsFromHead();
+        }
     }
 
     public void Move(Direction direction)
@@ -39,7 +51,8 @@ public class Snake
     {
         Head = Head.With(x, y);
         _body.Enqueue(Head);
-        HeadMoved?.Invoke(this, Head);
+        SaveOccupiedPointsFromHead();
+        HeadMovedStatic?.Invoke(this, Head);
 
         if (_grow)
             _grow = false;
@@ -48,14 +61,40 @@ public class Snake
     }
 
     public void Grow() => _grow = true;
-    private void RemoveTail() => TailRemoved?.Invoke(this, _body.Dequeue());
+
+    private void RemoveTail()
+    {
+        var tail = _body.Dequeue();
+        DeleteOccupiedPointsFromTail();
+
+        TailRemovedStatic?.Invoke(this, tail);
+        TailRemoved?.Invoke(this, tail);
+    }
 
     public void GetDamage()
     {
         RemoveTail();
         SnakeGotDamage?.Invoke(this);
-        
+
         if (Length == 0)
-            SnakeDied?.Invoke(this);
+            SnakeDiedStatic?.Invoke(this);
+    }
+
+    public HashSet<Point> GetSpaceOccupiedBySnake()
+    {
+        var res = new HashSet<Point>();
+        foreach (var set in _occupiedSpace) res.UnionWith(set);
+        return res;
+    }
+
+    private void SaveOccupiedPointsFromHead()
+    {
+        // TODO: При увеличении дальности обзора, увеличивается количество дублирующихся(ненужных) точек
+        _occupiedSpace.Enqueue(_getNeighbors(Head).ToHashSet());
+    }
+
+    private void DeleteOccupiedPointsFromTail()
+    {
+        _occupiedSpace.Dequeue();
     }
 }

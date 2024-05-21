@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using MySnake.Model;
 
-namespace MySnake.Model
+namespace MySnake.Tools
 {
     public static class Orientation
     {
@@ -19,5 +20,16 @@ namespace MySnake.Model
             [Direction.Left] = Direction.Right,
             [Direction.Right] = Direction.Left,
         };
+
+        private static IEnumerable<Point> GetNeighbors(Point point, int offsetX, int offsetY)
+        {
+            for (int dx = -offsetX; dx <= offsetX; dx++)
+            for (int dy = -offsetY; dy <= offsetY; dy++)
+                yield return point.With(dy, dx);
+        }
+
+        public static IEnumerable<Point> Get8Neighbors(Point point) => GetNeighbors(point, 1, 1);
+
+        public static IEnumerable<Point> Get24Neighbors(Point point) => GetNeighbors(point, 2, 2);
     }
 }
