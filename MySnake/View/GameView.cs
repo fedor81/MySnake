@@ -26,10 +26,12 @@ public class GameView
 
     private Rectangle CellSize { get; set; }
     public Texture2D SquareTexture { get; set; }
+    public SpriteFont Font { get; set; }
 
     private GraphicsDevice GraphicsDevice { get; init; }
     public SpriteBatch SpriteBatch { get; set; }
     public RenderTarget2D ToDrawBuffer { get; private set; }
+    public Color BufferColor { get; private set; }
     public GameModel Model { get; set; }
 
     private RenderTarget2D GameBuffer { get; set; }
@@ -97,6 +99,17 @@ public class GameView
         DrawOnBuffer(GameBuffer, DrawGamePlay);
     }
 
+    private void GetViewToRedColor()
+    {
+        
+    }
+
+    private void DrawGameInterface()
+    {
+        var hunger = Model.GetPlayerHungerValue();
+        SpriteBatch.DrawString(Font, hunger.ToString(), new Vector2(0, 0), Color.White);
+    }
+
     private void DrawGamePlay()
     {
         const float hidingFromGrass = 0.4f;
@@ -125,6 +138,8 @@ public class GameView
                 SpriteBatch.Draw(SquareTexture, new Vector2(cordX, cordY), CellSize, color);
             }
         }
+        
+        DrawGameInterface();
     }
 
     // TODO: Разбить Вьюшку

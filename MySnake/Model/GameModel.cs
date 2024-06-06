@@ -55,6 +55,7 @@ public class GameModel
     private Snake Player { get; set; }
     private HashSet<Snake> _snakes = new();
 
+    public int GetPlayerHungerValue() => Player.Hunger;
     public Point GetPlayerHead() => Player.Head;
     private int GameTime { get; set; }
 
@@ -71,7 +72,7 @@ public class GameModel
         {
             if (mapCell == MapCell.Food)
             {
-                Player.Grow();
+                Player.EatFood();
                 FoodSpawner.EatFood();
             }
 

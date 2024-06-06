@@ -26,12 +26,18 @@ public class Snake
     private Direction? _previousMove;
     private bool _grow;
 
+    public int Hunger { get; private set; }
+    private int MaxHunger { get; }
+
     public bool CanMove(Direction direction) =>
         Length == 1 || _previousMove == null || direction != Orientation.OppositeMoves[(Direction)_previousMove];
 
-    public Snake(int x, int y, int length)
+    public Snake(int x, int y, int length=10, int maxHungerValue=10)
     {
+        MaxHunger = maxHungerValue;
+        Hunger = MaxHunger;
         Head = new Point(x, y);
+        
         for (int i = 0; i < length; i++)
         {
             _body.Enqueue(new Point(x, y));
@@ -57,10 +63,21 @@ public class Snake
         if (_grow)
             _grow = false;
         else
+        {
             RemoveTail();
+            Hunger--;
+
+            if (Hunger != 0) return;
+            GetDamage();
+            Hunger = MaxHunger;
+        }
     }
 
-    public void Grow() => _grow = true;
+    public void EatFood()
+    {
+        _grow = true;
+        Hunger = MaxHunger;
+    }
 
     private void RemoveTail()
     {
@@ -69,15 +86,15 @@ public class Snake
 
         TailRemovedStatic?.Invoke(this, tail);
         TailRemoved?.Invoke(this, tail);
+        
+        if (Length == 0)
+            SnakeDiedStatic?.Invoke(this);
     }
 
     public void GetDamage()
     {
         RemoveTail();
         SnakeGotDamage?.Invoke(this);
-
-        if (Length == 0)
-            SnakeDiedStatic?.Invoke(this);
     }
 
     public HashSet<Point> GetSpaceOccupiedBySnake()

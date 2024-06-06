@@ -45,6 +45,7 @@ public class Game1 : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _view.SpriteBatch = _spriteBatch;
         _view.SquareTexture = Content.Load<Texture2D>("white-square");
+        _view.Font = Content.Load<SpriteFont>("Arial");
         _view.SetWindowSize(Window, EventArgs.Empty);
         _view.Update();
     }
@@ -62,7 +63,7 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(_view.BackgroundColor);
         _spriteBatch.Begin();
-        _spriteBatch.Draw(_view.ToDrawBuffer, _view.ToDrawPosition, Color.White);
+        _spriteBatch.Draw(_view.ToDrawBuffer, _view.ToDrawPosition, _view.BufferColor);
         _spriteBatch.End();
         
         base.Draw(gameTime);
