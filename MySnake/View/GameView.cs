@@ -31,7 +31,7 @@ public class GameView
     private GraphicsDevice GraphicsDevice { get; init; }
     public SpriteBatch SpriteBatch { get; set; }
     public RenderTarget2D ToDrawBuffer { get; private set; }
-    public Color BufferColor { get; private set; }
+    public Color BufferColor { get; private set; } = Color.White;
     public GameModel Model { get; set; }
 
     private RenderTarget2D GameBuffer { get; set; }
@@ -101,7 +101,7 @@ public class GameView
 
     private void GetViewToRedColor()
     {
-        
+        // TODO
     }
 
     private void DrawGameInterface()

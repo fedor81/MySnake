@@ -1,5 +1,6 @@
 using System;
 using MySnake.Model;
+using MySnake.Tools;
 
 namespace MySnake.MapGenerator;
 
@@ -8,6 +9,7 @@ public class MapGenerator
     private readonly Random _random;
     private readonly PerlinNoise _perlin;
     private readonly Growth _growth;
+    private readonly RandomMethodSelector _methodSelector;
 
     private const int MinWidth = 30;
     private const int MinHeight = 30;
@@ -19,6 +21,7 @@ public class MapGenerator
         _random = new Random(seed);
         _perlin = new PerlinNoise(_random.Next());
         _growth = new Growth(_random.Next());
+        _methodSelector = new RandomMethodSelector(this);
     }
 
     public GameMap GenerateRandomMap(int width = 0, int height = 0)
@@ -32,15 +35,10 @@ public class MapGenerator
             height += _random.Next(MaxHeight - height);
         }
 
-
-        return _random.Next(3) switch
-        {
-            0 => GenerateMapWithAnyWalls(width, height),
-            1 => GenerateMapWithThickWall(width, height),
-            _ => GenerateMapWithRoundWalls(width, height),
-        };
+        return _methodSelector.InvokeRandomMethod(width, height) as GameMap;
     }
 
+    [SelectableMethod]
     public GameMap GenerateMapWithThickWall(int width, int height)
     {
         const float minNoiseValue = 0.6f;
@@ -58,6 +56,7 @@ public class MapGenerator
         return new GameMap(map);
     }
 
+    [SelectableMethod]
     public GameMap GenerateMapWithAnyWalls(int width, int height)
     {
         const float minNoiseValue = 0.6f;
@@ -78,6 +77,7 @@ public class MapGenerator
         return new GameMap(map);
     }
 
+    [SelectableMethod]
     public GameMap GenerateMapWithRoundWalls(int width, int height)
     {
         var wallMap = GenerateMapByPerlin(width, height,

@@ -1,4 +1,5 @@
 using System;
+using MySnake.Tools;
 
 namespace MySnake.Model;
 
@@ -8,30 +9,38 @@ public class FoodSpawner
     private double StartFoodSpawnFactor { get; set; }
     private double FoodSpawnFactor { get; set; }
     private int NumberFoodEaten { get; set; }
-    private Func<int, double> _getDelta;
+    private readonly Func<int, double> _getDelta;
     private int TimeSinceLastSpawn { get; set; }
 
     public FoodSpawner(double startFoodSpawnFactor)
     {
         StartFoodSpawnFactor = startFoodSpawnFactor;
 
-        // TODO: Случайный выбор функции спавна еды
-        _getDelta = Exp;
+        var methodSelector = new RandomMethodSelector(this);
+        _getDelta = methodSelector.GetRandomMethod() as Func<int, double>;
 
         NumberFoodEaten = -1;
         EatFood();
     }
 
-    private static readonly Func<int, double> Sin = n => 1 + n * Math.Abs(Math.Sin(n)) / 5;
-    private static readonly Func<int, double> Sigma = n => n / 10.0 / (1 + Math.Exp(-n));
-    private static readonly Func<int, double> Log2 = n => 3 * Math.Log2(n + 1);
-    private static readonly Func<int, double> Sqrt = n => Math.Sqrt(n);
+    [SelectableMethod]
+    private static double Sin(int n) => 1 + n * Math.Abs(Math.Sin(n)) / 5;
 
-    private static readonly Func<int, double> Exp = n =>
+    [SelectableMethod]
+    private static double Sigma(int n) => n / 10.0 / (1 + Math.Exp(-n));
+
+    [SelectableMethod]
+    private static double Log2(int n) => 3 * Math.Log2(n + 1);
+
+    [SelectableMethod]
+    private static double Sqrt(int n) => Math.Sqrt(n);
+
+    [SelectableMethod]
+    private static double Exp(int n)
     {
         const double slow = 30.0;
         return Math.Exp(n / slow);
-    };
+    }
 
     public void EatFood()
     {
