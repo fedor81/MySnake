@@ -10,7 +10,6 @@ public class GameModel
 {
     private const int PlayerInitLength = 5;
 
-    // TODO: Player не должен спавниться в стене
     public GameModel()
     {
         var random = new Random();
@@ -25,18 +24,29 @@ public class GameModel
         Snake.HeadMovedStatic += AddSnakeBodyToMap;
         Snake.SnakeDiedStatic += ProcessSnakeDied;
 
-        Player = new Snake(MapWidth / 2, MapHeight / 2, PlayerInitLength);
+        var playerX = MapWidth / 2;
+        var playerY = MapHeight / 2;
 
-        AddSnakeToGame(Player, true);
+        while (!CanSpawnPlayer(new Point(playerX, playerY)))
+            Map = binder.CreateGameMap().GetNodes().First().Value;
 
-        var x = MapWidth / 2 + 1;
-        var y = MapHeight / 2 + 1;
-        while (Map[new Point(x, y)] != MapCell.Grass)
+        Player = new Snake(playerX, playerY, PlayerInitLength);
+
+        AddSnakeToGame(Player, isPlayer: true);
+    }
+
+    bool CanSpawnPlayer(Point playerHead)
+    {
+        if (!Map.IsWithinMap(playerHead) || Map[playerHead] == MapCell.Wall)
+            return false;
+
+        foreach (var point in DirectionHelper.AllDirections.Select(dir => playerHead.With(Orientation.DirectionToMove[dir])))
         {
-            x++;
-            y++;
+            if (!Map.IsWithinMap(point) || Map[point] == MapCell.Wall)
+                return false;
         }
-        AddSnakeToGame(new Snake(x, y, PlayerInitLength));
+
+        return true;
     }
 
     public Action Exit;

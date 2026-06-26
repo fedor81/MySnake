@@ -20,16 +20,16 @@ public class GameController
     {
         switch (e.Key)
         {
-            case Keys.A:
+            case Keys.A or Keys.Left:
                 Model.MovePlayer(Direction.Left);
                 break;
-            case Keys.W:
+            case Keys.W or Keys.Up:
                 Model.MovePlayer(Direction.Up);
                 break;
-            case Keys.D:
+            case Keys.D or Keys.Right:
                 Model.MovePlayer(Direction.Right);
                 break;
-            case Keys.S:
+            case Keys.S or Keys.Down:
                 Model.MovePlayer(Direction.Down);
                 break;
             case Keys.M:
